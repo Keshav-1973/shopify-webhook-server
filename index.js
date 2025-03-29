@@ -1,78 +1,69 @@
-const express = require('express')
-const app = express()
-const crypto = require('crypto')
-const axios = require('axios')
+const express = require('express');
+const bodyParser = require('body-parser');
+const crypto = require('crypto');
+const axios = require('axios');
+require('dotenv').config();
 
-require('dotenv').config()
+const app = express();
 
-const SECRET_KEY = process.env.SHOPIFY_SECRET_KEY
-const WHATSAPP_ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN
+const SECRET_KEY = process.env.SHOPIFY_SECRET_KEY;
+const WHATSAPP_ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
+const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
 
-// Middleware to capture raw body for HMAC verification
-app.use(express.json({ verify: (req, res, buf) => { req.rawBody = buf } }))
+app.use(express.json({
+    verify: (req, res, buf) => {
+        req.rawBody = buf;
+    }
+}));
 
 app.post('/webhooks/orders/create', async (req, res) => {
-    console.log('✅ Received a Shopify Order Webhook')
+    console.log('✅ Received a Shopify Order Webhook');
 
-    // Verify Shopify Webhook Signature
-    const hmac = req.get('X-Shopify-Hmac-Sha256')
-    console.log('🔍 Shopify HMAC Header:', hmac)
-
+    const hmac = req.get('X-Shopify-Hmac-Sha256');
     if (!hmac || !SECRET_KEY) {
-        console.log('❌ Error: Missing HMAC or SECRET_KEY')
-        return res.sendStatus(403)
+        console.log('❌ Missing HMAC or SECRET_KEY');
+        return res.sendStatus(403);
     }
 
-    const hash = crypto
+    const computedHmac = crypto
         .createHmac('sha256', SECRET_KEY)
-        .update(req.rawBody, 'utf8')
-        .digest('base64')
+        .update(req.rawBody.toString('utf8'))
+        .digest('base64');
 
-    if (hash !== hmac) {
-        console.log('❌ Error: HMAC verification failed! Not from Shopify!')
-        return res.sendStatus(403)
+    if (computedHmac !== hmac) {
+        console.log('❌ HMAC verification failed! Possible tampering detected.');
+        return res.sendStatus(403);
     }
 
-    console.log('✅ HMAC verification passed! Order is from Shopify.')
-    res.sendStatus(200)
+    console.log('✅ HMAC verification passed!');
+    res.sendStatus(200);
 
     // Extract Order Details
-    const order = req.body
-    const phone = order.customer?.phone || 'default_number'
-    const firstName = order.customer?.first_name || 'Customer'
-    const orderId = order.id || 'Unknown'
+    const order = req.body;
+    const phone = order.customer?.phone || '918619318876'; // Default phone if missing
+    
+    // WhatsApp API request
+    const messageData = {
+        messaging_product: 'whatsapp',
+        to: phone,
+        type: 'template',
+        template: {
+            name: 'hello_world',
+            language: { code: 'en_US' }
+        }
+    };
 
-    // Send WhatsApp Message
     const config = {
-        headers: { 
-            Authorization: `Bearer ${WHATSAPP_ACCESS_TOKEN}`, 
+        headers: {
+            Authorization: `Bearer ${WHATSAPP_ACCESS_TOKEN}`,
             'Content-Type': 'application/json'
         }
-    }
+    };
 
-    const messageData = {
-        "messaging_product": "whatsapp", 
-        "to": phone, 
-        "type": "template", 
-        "template": { 
-            "name": "order_confirmation", 
-            "language": { "code": "en_GB" },
-            "components": [
-                {
-                    "type": "body",
-                    "parameters": [
-                        { "type": "text", "text": firstName },
-                        { "type": "text", "text": orderId }
-                    ]
-                }
-            ] 
-        } 
-    }
+    axios.post(`https://graph.facebook.com/v22.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`, messageData, config)
+        .then(result => console.log('✅ WhatsApp Message Sent:', result.data))
+        .catch(err => console.log('❌ WhatsApp API Error:', err.response?.data || err));
+});
 
-    axios.post("https://graph.facebook.com/v14.0/103738239149898/messages", messageData, config)
-        .then(result => console.log('✅ WhatsApp Message Sent:', result.data))    
-        .catch(err => console.log('❌ WhatsApp API Error:', err.response?.data || err))
-})
-
-const PORT = process.env.PORT || 3000
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}!`))
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}!`));
