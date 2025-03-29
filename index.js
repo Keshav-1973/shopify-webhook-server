@@ -40,7 +40,7 @@ app.post('/webhooks/orders/create', async (req, res) => {
 
     // Extract Order Details
     const order = req.body;
-    const phone = order.customer?.phone || '918619318876'; // Default phone if missing
+    const phone = '918619318876'; // Default phone if missing
     
     // WhatsApp API request
     const messageData = {
