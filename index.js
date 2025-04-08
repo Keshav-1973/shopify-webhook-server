@@ -62,7 +62,6 @@ app.post('/webhooks/orders/create', async (req, res) => {
     .map(item => `${item.quantity} x ${item.name}`)
     .join(', ') || 'your items';                                        // {{4}}
 
-  const estimatedDelivery = 'Jan 1, 2024';                              // {{5}} (you can make dynamic later)
 
   // Step 3: Send WhatsApp message
   const messageData = {
@@ -80,7 +79,6 @@ app.post('/webhooks/orders/create', async (req, res) => {
             { type: 'text', text: orderPurpose },         // {{2}}
             { type: 'text', text: orderId },              // {{3}}
             { type: 'text', text: productSummary },       // {{4}}
-            { type: 'text', text: estimatedDelivery }     // {{5}}
           ]
         }
       ]
