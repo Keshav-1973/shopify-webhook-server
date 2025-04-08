@@ -68,7 +68,7 @@ app.post('/webhooks/orders/create', async (req, res) => {
   to: sanitizedPhone,
   type: 'template',
   template: {
-    name: 'order_confirmed', // <-- use your actual template name here
+    name: 'order_confirmation', // <-- use your actual template name here
     language: { code: 'en_US' }, // or 'en_GB' if that's the available translation
     components: [
       {
