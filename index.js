@@ -1,15 +1,16 @@
 const express = require('express');
-const bodyParser = require('body-parser');
 const crypto = require('crypto');
 const axios = require('axios');
 require('dotenv').config();
 
 const app = express();
 
+// Environment variables
 const SECRET_KEY = process.env.SHOPIFY_SECRET_KEY;
 const WHATSAPP_ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
 const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
 
+// Middleware to capture raw body for HMAC validation
 app.use(express.json({
     verify: (req, res, buf) => {
         req.rawBody = buf;
@@ -36,23 +37,58 @@ app.post('/webhooks/orders/create', async (req, res) => {
     }
 
     console.log('✅ HMAC verification passed!');
-    res.sendStatus(200);
+    res.sendStatus(200); // Respond to Shopify
 
     // Extract Order Details
     const order = req.body;
-    const phone = '918619318876'; // Default phone if missing
-    
-    // WhatsApp API request
+
+    // Safely get the customer's phone number
+    let phone =
+        order.customer?.phone ||
+        order.shipping_address?.phone ||
+        order.billing_address?.phone ||
+        null;
+
+    if (!phone) {
+        console.log('❌ No phone number found in the order!');
+        return;
+    }
+
+    // Sanitize phone number (remove non-digits)
+    const sanitizedPhone = phone.replace(/[^\d]/g, '');
+
+    // Optional: Ensure the phone number includes the country code
+    if (!sanitizedPhone.startsWith('91')) {
+        console.log('⚠️ Phone number may not be in international format:', sanitizedPhone);
+    }
+
+    // WhatsApp API request body
     const messageData = {
         messaging_product: 'whatsapp',
-        to: phone,
+        to: sanitizedPhone,
         type: 'template',
         template: {
-            name: 'hello_world',
-            language: { code: 'en_US' }
+            name: 'order_confirmation', // Replace with your actual template name
+            language: { code: 'en_US' },
+            components: [
+                {
+                    type: 'body',
+                    parameters: [
+                        {
+                            type: 'text',
+                            text: order.customer?.first_name || 'Customer'
+                        },
+                        {
+                            type: 'text',
+                            text: `${order.id}`
+                        }
+                    ]
+                }
+            ]
         }
     };
 
+    // WhatsApp API request config
     const config = {
         headers: {
             Authorization: `Bearer ${WHATSAPP_ACCESS_TOKEN}`,
@@ -60,10 +96,19 @@ app.post('/webhooks/orders/create', async (req, res) => {
         }
     };
 
-    axios.post(`https://graph.facebook.com/v22.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`, messageData, config)
-        .then(result => console.log('✅ WhatsApp Message Sent:', result.data))
-        .catch(err => console.log('❌ WhatsApp API Error:', err.response?.data || err));
+    // Send message
+    try {
+        const response = await axios.post(
+            `https://graph.facebook.com/v17.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`,
+            messageData,
+            config
+        );
+        console.log('✅ WhatsApp Message Sent:', response.data);
+    } catch (err) {
+        console.error('❌ WhatsApp API Error:', err.response?.data || err.message);
+    }
 });
 
+// Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}!`));
