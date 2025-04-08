@@ -63,30 +63,27 @@ app.post('/webhooks/orders/create', async (req, res) => {
     }
 
     // WhatsApp API request body
-    const messageData = {
-        messaging_product: 'whatsapp',
-        to: sanitizedPhone,
-        type: 'template',
-        template: {
-            name: 'order_confirmation', // Replace with your actual template name
-            language: { code: 'en_US' },
-            components: [
-                {
-                    type: 'body',
-                    parameters: [
-                        {
-                            type: 'text',
-                            text: order.customer?.first_name || 'Customer'
-                        },
-                        {
-                            type: 'text',
-                            text: `${order.id}`
-                        }
-                    ]
-                }
-            ]
-        }
-    };
+   const messageData = {
+  messaging_product: 'whatsapp',
+  to: sanitizedPhone,
+  type: 'template',
+  template: {
+    name: 'order_confirmed', // <-- use your actual template name here
+    language: { code: 'en_US' }, // or 'en_GB' if that's the available translation
+    components: [
+      {
+        type: 'body',
+        parameters: [
+          { type: 'text', text: order.customer?.first_name || 'there' },        // {{1}} Name
+          { type: 'text', text: `#${order.id}` },                                // {{2}} Order ID
+          { type: 'text', text: '2 12-pack of Jasper\'s paper towels' },         // {{3}} Items
+          { type: 'text', text: 'Jan 1, 2024' }                                   // {{4}} ETA
+        ]
+      }
+    ]
+  }
+};
+
 
     // WhatsApp API request config
     const config = {
