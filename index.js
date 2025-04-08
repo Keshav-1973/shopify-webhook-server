@@ -70,7 +70,7 @@ app.post('/webhooks/orders/create', async (req, res) => {
     to: sanitizedPhone,
     type: 'template',
     template: {
-      name: 'order_confirmation', // your approved template name
+      name: 'shopify_order_confirmation', // your approved template name
       language: { code: 'en_US' },
       components: [
         {
