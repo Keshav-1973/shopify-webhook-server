@@ -39,25 +39,18 @@ app.post('/webhooks/orders/create', async (req, res) => {
 
   const order = req.body;
 
-// Step 1: Extract customer phone number and add country code if needed
-let phone =
-  order.customer?.phone ||
-  order.shipping_address?.phone ||
-  order.billing_address?.phone;
+  // Step 1: Extract customer phone number
+  let phone =
+    order.customer?.phone ||
+    order.shipping_address?.phone ||
+    order.billing_address?.phone;
 
-if (!phone) {
-  console.log('❌ No phone number found in the order!');
-  return;
-}
+  if (!phone) {
+    console.log('❌ No phone number found in the order!');
+    return;
+  }
 
-const sanitizedPhone = phone.replace(/[^\d]/g, '');  // Remove non-digits
-const countryCode = order.shipping_address?.country_code || 'IN'; // Default to 'IN' if country code is not found
-
-// If phone number doesn't already include country code, prepend it
-const formattedPhone = `+${countryCode}${sanitizedPhone}`;
-
-console.log(`Formatted Phone: ${formattedPhone}`);
-
+  const sanitizedPhone = phone.replace(/[^\d]/g, '');
 
   // Step 2: Prepare template variables
   const customerName = order.customer?.first_name || 'Customer';        // {{1}}
@@ -74,7 +67,7 @@ const orderToken = order.id || '1234567890abcdef';                      // {{5}}
   // Step 3: Send WhatsApp message
  const messageData = {
   messaging_product: 'whatsapp',
-  to: formattedPhone,
+  to: sanitizedPhone,
   type: 'template',
   template: {
     name: 'shopify_order_comfirmation', // your approved template name
