@@ -70,7 +70,7 @@ const messageData = {
   to: sanitizedPhone,
   type: 'template',
   template: {
-    name: 'shopify_order_comfirmation',
+    name: 'test_confirmation',
     language: { code: 'en_US' },
     components: [
       {
