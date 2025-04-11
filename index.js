@@ -65,22 +65,28 @@ app.post('/webhooks/orders/create', async (req, res) => {
 const orderToken = order.id || '1234567890abcdef';                      // {{5}}
 
   // Step 3: Send WhatsApp message
- const messageData = {
+const messageData = {
   messaging_product: 'whatsapp',
   to: sanitizedPhone,
   type: 'template',
   template: {
-    name: 'shopify_order_comfirmation', // your approved template name
+    name: 'shopify_order_comfirmation',
     language: { code: 'en_US' },
     components: [
       {
+        type: 'header',
+        parameters: [
+          { type: 'text', text: sanitizedPhone } // Replace with actual phone number
+        ]
+      },
+      {
         type: 'body',
         parameters: [
-          { type: 'text', text: customerName },  // {{1}}
-          { type: 'text', text: orderPurpose },   // {{2}}
-          { type: 'text', text: orderId },        // {{3}}
-          { type: 'text', text: productSummary }, // {{4}}
-          { type: 'text', text: orderToken }      // {{5}} - Token used in message body
+          { type: 'text', text: customerName },
+          { type: 'text', text: orderPurpose },
+          { type: 'text', text: orderId },
+          { type: 'text', text: productSummary },
+          { type: 'text', text: orderToken }
         ]
       },
       {
@@ -88,12 +94,13 @@ const orderToken = order.id || '1234567890abcdef';                      // {{5}}
         sub_type: 'url',
         index: 0,
         parameters: [
-          { type: 'text', text: orderToken }      // {{5}} - Token used in button URL
+          { type: 'text', text: orderToken }
         ]
       }
     ]
   }
 };
+
 
   const config = {
     headers: {
