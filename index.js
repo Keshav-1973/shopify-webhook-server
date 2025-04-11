@@ -74,19 +74,12 @@ const messageData = {
     language: { code: 'en_US' },
     components: [
       {
-        type: 'header',
-        parameters: [
-          { type: 'text', text: sanitizedPhone } // Replace with actual phone number
-        ]
-      },
-      {
         type: 'body',
         parameters: [
-          { type: 'text', text: customerName },
-          { type: 'text', text: orderPurpose },
-          { type: 'text', text: orderId },
-          { type: 'text', text: productSummary },
-          { type: 'text', text: orderToken }
+          { type: 'text', text: customerName },   // {{1}} - John
+          { type: 'text', text: orderPurpose },    // {{2}} - purchase
+          { type: 'text', text: orderId },         // {{3}} - #12345
+          { type: 'text', text: productSummary }   // {{4}} - item summary
         ]
       },
       {
@@ -94,12 +87,13 @@ const messageData = {
         sub_type: 'url',
         index: 0,
         parameters: [
-          { type: 'text', text: orderToken }
+          { type: 'text', text: orderToken }       // {{1}} - used in URL
         ]
       }
     ]
   }
 };
+
 
 
   const config = {
