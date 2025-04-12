@@ -74,6 +74,12 @@ const messageData = {
     language: { code: 'en_US' },
     components: [
       {
+        type: 'header',
+        parameters: [
+          { type: 'text', text: orderId }  // ← this fixes the missing header param issue
+        ]
+      },
+      {
         type: 'body',
         parameters: [
           { type: 'text', text: customerName },   // {{1}} - John
