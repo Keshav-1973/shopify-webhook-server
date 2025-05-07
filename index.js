@@ -67,7 +67,7 @@ const orderToken = order.id || '1234567890abcdef';                      // {{5}}
   // Step 3: Send WhatsApp message
 const messageData = {
   messaging_product: 'whatsapp',
-  to: sanitizedPhone,
+  to: "+918619318876",
   type: 'template',
   template: {
     name: 'test_confirmation',
